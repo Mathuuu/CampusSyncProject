@@ -12,10 +12,10 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { UilSetting } from '@iconscout/react-unicons'
 import ChatBox from '../../components/ChatBox/ChatBox';
-import {io} from 'socket.io-client'
+import { io } from 'socket.io-client'
 const Chat = () => {
 
-  const {user} = useSelector((state) => state.authReducer.authData);  
+  const { user } = useSelector((state) => state.authReducer.authData);
   const [chats, setChats] = useState([])
   const [currentChat, setCurrentChat] = useState(null)
   const [sendMessage, setSendMessage] = useState(null);
@@ -23,9 +23,15 @@ const Chat = () => {
   const [onlineUsers, setOnlineUsers] = useState([]);
   const socket = useRef()
 
+  const profile = localStorage.getItem('profile');
+  const loggedInUserId = JSON.parse(profile).user._id
+
+  console.log("ID HERE", loggedInUserId)
+
   useEffect(() => {
-    if (sendMessage!==null) {
-      socket.current.emit("send-message", sendMessage);}
+    if (sendMessage !== null) {
+      socket.current.emit("send-message", sendMessage);
+    }
   }, [sendMessage]);
 
 
@@ -48,58 +54,69 @@ const Chat = () => {
   }, []);
 
   useEffect(() => {
-    const getChats = async()=> {
+    const getChats = async () => {
       try {
-        const {data} = await userChats(user._id)
-        setChats(data)
-        console.log(data)
+        fetch(`http://localhost:5000/chat/${user._id}`).then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return response.json()
+        }).then(data => {
+          const membersArray = data[0].members; // Accessing the members array
+          setChats(data);
+        })
+        // const dt = await fetch(`http://localhost:5000/chat/${user._id}`);
+        // const whole = dt.json()
+        // const data = whole[0].members
+        // console.log(data)
+        // setChats(data);
       } catch (error) {
         console.log(error);
       }
     };
     getChats();
-  }, [user]);
+  }, [user._id]);
 
   const checkOnlineStatus = (chat) => {
     const chatMember = chat.members.find((member) => member !== user._id);
     const online = onlineUsers.find((user) => user.userId === chatMember);
     return online ? true : false;
   };
-  
+
   return (
     <div className="Chat">
       {/* Left Side */}
       <div className="Left-side-chat">
-      <LogoSearch/>
-      <div className='Chat-container'>
-      <h2>Chats</h2>
-      <div className="Chat-list"> Conversation
-        {chats.map((chat) => (
-          <div onClick={()=> setCurrentChat(chat)}>
-            <Conversation data= {chat} currentUser = {user._id} online ={checkOnlineStatus(chat)} />
+        <LogoSearch />
+        <div className='Chat-container'>
+          <h2>Chats</h2>
+          <div className="Chat-list"> Conversation
+            {chats.map((chat) => (
+              <div onClick={() => setCurrentChat(chat)}>
+                <Conversation data={chat} currentUser={user._id} online={checkOnlineStatus(chat)} />
+              </div>
+            ))}
           </div>
-        ))}
+        </div>
       </div>
-      </div>
-    </div>
-       
+
 
       {/* Right Side */}
       <div className="Right-side-chat">
-              <div style={{width: '20rem', alignSelf: 'flex-end'}}>
-              <div className="navIcons">
-        <Link to = '../home'><img src={Home} alt="" />
-        </Link>
-        <UilSetting/>
-        <img src={Noti} alt="" />
-        <Link to = '../chat'>
-        <img src={Comment} alt="" />
-        </Link>
-      </div>
-         {      }
-         <ChatBox chat={currentChat} currentUser = {user._id} setSendMessage=
-         {setSendMessage}  recieveMessage = {recieveMessage}/>
-              </div>
+        <div style={{ width: '20rem', alignSelf: 'flex-end' }}>
+          <div className="navIcons">
+            <Link to='../home'><img src={Home} alt="" />
+            </Link>
+            <UilSetting />
+            <img src={Noti} alt="" />
+            <Link to='../chat'>
+              <img src={Comment} alt="" />
+            </Link>
+          </div>
+          { }
+          <ChatBox chat={currentChat} currentUser={user._id} setSendMessage=
+            {setSendMessage} recieveMessage={recieveMessage} />
+        </div>
       </div>
     </div>
   )
@@ -107,5 +124,7 @@ const Chat = () => {
 
 
 export default Chat;
+
+
 
 

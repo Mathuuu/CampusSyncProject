@@ -21,6 +21,7 @@ export const getAllUsers = async(req, res)=> {
 //get a user
 export const getUser = async(req, res)=> { 
     const id = req.params.id;
+    console.log("REQ", req)
 
     try {
         const user = await UserModel.findById(id);
@@ -45,6 +46,8 @@ export const getUser = async(req, res)=> {
 export const updateUser = async(req, res) => {
     const id = req.params.id;
     const { _id, currentUserAdminStatus, password} = req.body;
+
+    console.log(req.body)
 
     if(id === _id)
     {
